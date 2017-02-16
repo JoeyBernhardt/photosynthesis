@@ -16,13 +16,17 @@ library(plotrix)
 data_raw <- read_csv("data-raw/Phyto_resp_scenedesmus_feb8_2017_Oxygen.csv")
 data_raw2 <- read_csv("data-raw/feb_13_photo_resp_24.csv")
 data_raw3 <- read_csv("data-raw/feb13_photo_resp_20C_Oxygen.csv")
+data_raw_12_scen <- read_csv("data-raw/feb14_photo_resp_12_Oxygen.csv")
 
 data_2 <- clean_names(data_raw2)
 data_3 <- clean_names(data_raw3)
+data_12_scen <- clean_names(data_raw_12_scen)
 ## get the date time in the right format
 data2 <- data_2 %>% 
 	mutate(date_time = dmy_hms(date_time))
 data3 <- data_3 %>% 
+	mutate(date_time = dmy_hms(date_time))
+data_12_scen <- data_12_scen %>% 
 	mutate(date_time = dmy_hms(date_time))
 
 ### look at how temperature drifts over time
@@ -287,9 +291,72 @@ all_data_24 <- full_join(photosynthesis24, respiration24, by = "well_id") %>%
 
 
 all_data_feb13 <- bind_rows(all_data_20, all_data_24) 
-### plot all the flux rates
 
-all_data_feb13 %>%
+
+# now bringing in 12C scen data from feb14 --------------------------------
+
+
+data_processed12 <- data_12_scen %>% 
+	select(-c2) %>% 
+	filter(time_min > 70) %>% 
+	gather(key = well_id, value = oxygen, 3:25) %>%
+	mutate(treatment = ifelse(well_id %in% c("a1", "a3", "b2", "b3", "b4", "b5", "c1", "c4", "c5", "c6", "d2", "d5", "d4", "d6"), "phyto", "control")) %>%
+	mutate(rate_type = ifelse(time_min < 150.5, "photosynthesis", "respiration")) %>% 
+	mutate(temperature = "12")
+
+## get the control slope for the photosynthesis portion
+average_control_slope_photo_12 <- data_processed12 %>%  
+	filter(rate_type == "photosynthesis") %>% 
+	filter(treatment == "control") %>% 
+	group_by(well_id) %>% 
+	do(tidy(lm(oxygen ~ date_time, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	ungroup() %>% 
+	summarise(average_control_slope_resp = mean(estimate))
+
+average_control_slope_photo_12[[1]]
+
+
+## get the control slope for the respiration portion
+average_control_slope_resp_12 <- data_processed12 %>%  
+	filter(rate_type == "respiration") %>% 
+	filter(treatment == "control") %>% 
+	group_by(well_id) %>% 
+	do(tidy(lm(oxygen ~ date_time, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	ungroup() %>% 
+	summarise(average_control_slope_resp = mean(estimate)) 
+
+average_control_slope_resp_12[[1]]
+
+
+## now calculate the actual photosynthesis and respiration rates
+
+photosynthesis12 <- data_processed12 %>% 
+	filter(rate_type == "photosynthesis") %>% 
+	filter(treatment == "phyto") %>% 
+	group_by(well_id) %>% 
+	do(tidy(lm(oxygen ~ date_time, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	mutate(corrected_photosynthesis_slope = estimate - average_control_slope_photo_12[[1]])  %>% 
+	mutate(temperature = "12")
+
+
+
+respiration12 <- data_processed12 %>% 
+	filter(rate_type == "respiration") %>% 
+	filter(treatment == "phyto") %>% 
+	group_by(well_id) %>% 
+	do(tidy(lm(oxygen ~ date_time, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	mutate(corrected_respiration_slope = estimate - average_control_slope_resp_12[[1]])  %>% 
+	mutate(temperature = "12")
+
+all_data_12 <- full_join(photosynthesis12, respiration12, by = "well_id") %>% 
+	mutate(GPP = corrected_photosynthesis_slope + (-1*corrected_respiration_slope)) 
+
+
+all_data_12 %>%
 	gather(key = flux_type, value = rate_estimate, GPP, contains("corrected")) %>% 
 	mutate(rate_estimate = rate_estimate * 3600) %>% 
 	ggplot(aes(x = well_id, y = rate_estimate, color = flux_type)) + geom_point(size = 6) +
@@ -297,7 +364,32 @@ all_data_feb13 %>%
 	facet_wrap( ~ temperature.x)
 
 
-all_data_feb13 %>%
+### biovolumes for feb 14 12C run
+
+mean_biovolume_12_per_litre <- (((1237771*294.88) + (1258975*306.06))/2)*1000
+
+mean_biovolume_20_per_litre <- (((1027756*355.38) + (1012787*359.97))/2)*1000
+	
+
+
+# making plots! -----------------------------------------------------------
+
+### plot all the flux rates
+
+all_data <- bind_rows(all_data_12, all_data_feb13)
+
+write_csv(all_data, "data-processed/scenedesmus_photo_resp_rates.csv")
+
+
+all_data %>%
+	gather(key = flux_type, value = rate_estimate, GPP, contains("corrected")) %>% 
+	mutate(rate_estimate = rate_estimate * 3600) %>% 
+	ggplot(aes(x = well_id, y = rate_estimate, color = flux_type)) + geom_point(size = 6) +
+	geom_hline(yintercept = 0) + ylab("oxygen flux (mg O2 /L * hr)") + theme_bw() +
+	facet_wrap( ~ temperature.x)
+
+
+all_data %>%
 	gather(key = flux_type, value = rate_estimate, GPP, contains("corrected")) %>% 
 	mutate(rate_estimate = rate_estimate * 3600) %>% 
 	group_by(temperature.x, flux_type) %>% 
@@ -309,7 +401,7 @@ all_data_feb13 %>%
 	geom_smooth(method = "lm") + 
 	ylab("oxygen flux (mg/L*hour)") + geom_hline(yintercept = 0) + theme_bw() 
 
-all_data_feb13 %>%
+all_data %>%
 	ungroup() %>% 
 	gather(key = flux_type, value = rate_estimate, GPP, contains("corrected")) %>% 
 	mutate(rate_estimate = rate_estimate * 3600) %>% 
@@ -323,7 +415,7 @@ all_data_feb13 %>%
 	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 
-all_data_feb13 %>%
+all_data %>%
 	ungroup() %>% 
 	gather(key = flux_type, value = rate_estimate, GPP, contains("corrected")) %>% 
 	mutate(rate_estimate = rate_estimate * 3600) %>% 
@@ -331,8 +423,14 @@ all_data_feb13 %>%
 	# summarise_each(funs(mean, std.error), rate_estimate) %>% 
 	# ungroup() %>% 
 	mutate(temperature.x = as.numeric(temperature.x)) %>% 
-	mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) %>% 
-	filter(flux_type == "GPP") %>% 
-	ggplot(aes(x = inverse_temp, y = rate_estimate)) + geom_point() +
+	mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) %>%
+	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>%
+	mutate(flux_type = ifelse(grepl("corrected_respiration_slope", flux_type), "respiration", flux_type)) %>% 
+	mutate(flux_type = ifelse(grepl("corrected_photosynthesis_slope", flux_type), "photosynthesis", flux_type)) %>% 
+	# filter(flux_type == "GPP") %>% 
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate))) + geom_point(size = 4, color = "blue", alpha = 0.5) +
+	facet_wrap( ~ flux_type) +
 	geom_smooth(method = lm) +
-	scale_x_reverse()
+	scale_x_reverse() + theme_bw() + ylab("ln metabolic rate (mg O2/L*hr") + xlab("inverse temperature (1/kT)") 
+
+
