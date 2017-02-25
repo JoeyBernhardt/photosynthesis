@@ -394,6 +394,9 @@ all_data %>%
 	mutate(rate_estimate = rate_estimate * 3600) %>% 
 	group_by(temperature.x, flux_type) %>% 
 	summarise_each(funs(mean, std.error), rate_estimate) %>%
+	mutate(mean = ifelse(grepl("respiration", flux_type), mean*-1, mean)) %>%
+	mutate(flux_type = ifelse(grepl("corrected_respiration_slope", flux_type), "respiration", flux_type)) %>% 
+	mutate(flux_type = ifelse(grepl("corrected_photosynthesis_slope", flux_type), "photosynthesis", flux_type)) %>%
 	# mutate(mean = ifelse(grepl("respiration", flux_type), mean*-1, mean)) %>% 
 	ggplot(aes(x = temperature.x, y = mean)) + geom_point(size = 3) +
 	facet_wrap( ~ flux_type) + geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 0.1) +
