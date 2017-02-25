@@ -840,7 +840,7 @@ all_data_corr %>%
 	filter(rate_estimate > 0) %>% 
 	group_by(flux_type) %>% 
 	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>%
-	filter(term != "(Intercept)") %>% View
+	filter(term != "(Intercept)") %>%
 	filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>%
 	ggplot(aes(x = flux_type, y = estimate)) + geom_point(size = 4) +
 	geom_errorbar(aes(ymin= conf.low, ymax = conf.high), width = 0.1) + theme_bw() + ylab("activation energy (Ea)")
@@ -859,3 +859,4 @@ all_data_corr %>%
 		geom_smooth(method = "lm") + facet_wrap( ~ flux_type, scales = "free") + theme_bw() +
 		ylab("mass normalized oxygen flux (mg/L*hr*biovolume)") +
 		xlab("temperature (C)")
+ggsave("figures/mass_normalized_flux_slopes.png", width = 12, height = 8)
