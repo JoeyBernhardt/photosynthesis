@@ -840,8 +840,11 @@ all_data_corr %>%
 	filter(rate_estimate > 0) %>% 
 	group_by(flux_type) %>% 
 	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>%
-	filter(term != "(Intercept)") %>%
+	filter(term != "(Intercept)") %>% View
 	filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>%
+	ungroup() %>% 
+	mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
+	mutate(flux_type = str_replace(flux_type, "repiration_corr", "respiration")) %>% 
 	ggplot(aes(x = flux_type, y = estimate)) + geom_point(size = 4) +
 	geom_errorbar(aes(ymin= conf.low, ymax = conf.high), width = 0.1) + theme_bw() + ylab("activation energy (Ea)")
 	
@@ -855,8 +858,11 @@ all_data_corr %>%
 		filter(rate_estimate > 0) %>%
 		filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>% 
 		mutate(temperature.x = as.numeric(temperature.x)) %>% 
+		ungroup() %>% 
+		mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
+		mutate(flux_type = str_replace(flux_type, "respiration_corr", "respiration")) %>%
 		ggplot(aes(x = temperature.x, y = rate_estimate)) + geom_point(size = 4, alpha = 0.5, color = "blue") + 
 		geom_smooth(method = "lm") + facet_wrap( ~ flux_type, scales = "free") + theme_bw() +
-		ylab("mass normalized oxygen flux (mg/L*hr*biovolume)") +
-		xlab("temperature (C)")
+		ylab("oxygen flux (mg/L*hr*um3)") +
+		xlab("temperature (C)") + theme(text = element_text(size=20))
 ggsave("figures/mass_normalized_flux_slopes.png", width = 12, height = 8)
