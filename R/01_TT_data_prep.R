@@ -839,8 +839,8 @@ all_data_corr %>%
 	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
 	filter(rate_estimate > 0) %>% 
 	group_by(flux_type) %>% 
-	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>%
-	filter(term != "(Intercept)") %>% View
+	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	filter(term != "(Intercept)") %>% 
 	filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>%
 	ungroup() %>% 
 	mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
@@ -860,9 +860,132 @@ all_data_corr %>%
 		mutate(temperature.x = as.numeric(temperature.x)) %>% 
 		ungroup() %>% 
 		mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
-		mutate(flux_type = str_replace(flux_type, "respiration_corr", "respiration")) %>%
-		ggplot(aes(x = temperature.x, y = rate_estimate)) + geom_point(size = 4, alpha = 0.5, color = "blue") + 
-		geom_smooth(method = "lm") + facet_wrap( ~ flux_type, scales = "free") + theme_bw() +
-		ylab("oxygen flux (mg/L*hr*um3)") +
-		xlab("temperature (C)") + theme(text = element_text(size=20))
+		mutate(flux_type = str_replace(flux_type, "respiration_corr", "respiration")) %>% 
+		mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) %>%
+		filter(flux_type == "gross photosynthesis") %>% 
+		ggplot(aes(x = inverse_temp, y = log(rate_estimate))) + geom_abline(slope = 0.32, intercept = -5.4, color = "orange", size = 4) +
+		geom_point(size = 4, alpha = 0.0000001, color = "blue") + 
+		# geom_smooth(method = "lm") + facet_wrap( ~ flux_type, scales = "free") +
+		theme_bw() +
+		ylab("oxygen flux (mg O2/L*hr*um3)") +
+		xlab("temperature (1/kT)") + theme(text = element_text(size=20)) +
+		scale_x_reverse()
+		
 ggsave("figures/mass_normalized_flux_slopes.png", width = 12, height = 8)
+
+
+
+
+### photosynthesis prediction plot
+all_data_corr %>% 
+	ungroup() %>% 
+	filter(temperature.x != 19) %>%
+	filter(temperature.x != 22) %>%
+	gather(key = flux_type, value = rate_estimate, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected")) %>% 
+	mutate(rate_estimate = rate_estimate * 3600) %>% 
+	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
+	filter(rate_estimate > 0) %>%
+	filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>% 
+	mutate(temperature.x = as.numeric(temperature.x)) %>% 
+	ungroup() %>% 
+	mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
+	mutate(flux_type = str_replace(flux_type, "respiration_corr", "respiration")) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) %>%
+	filter(flux_type == "gross photosynthesis") %>% 
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate))) + geom_abline(slope = 0.32, intercept = -5.4, color = "orange", size = 4) +
+	geom_point(size = 4, alpha = 0.0000001, color = "blue") + 
+	# geom_smooth(method = "lm") +
+	# facet_wrap( ~ flux_type, scales = "free") +
+	theme_bw() +
+	ylab("oxygen flux (mg O2/L*hr*um3)") +
+	xlab("temperature (1/kT)") + theme(text = element_text(size=24)) +
+	scale_x_reverse()
+
+ggsave("figures/photosynthesis-prediction-plot.pdf")
+
+### photosynthesis with data plot
+all_data_corr %>% 
+	ungroup() %>% 
+	filter(temperature.x != 19) %>%
+	filter(temperature.x != 22) %>%
+	gather(key = flux_type, value = rate_estimate, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected")) %>% 
+	mutate(rate_estimate = rate_estimate * 3600) %>% 
+	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
+	filter(rate_estimate > 0) %>%
+	filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>% 
+	mutate(temperature.x = as.numeric(temperature.x)) %>% 
+	ungroup() %>% 
+	mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
+	mutate(flux_type = str_replace(flux_type, "respiration_corr", "respiration")) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) %>%
+	filter(flux_type == "gross photosynthesis") %>% 
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate))) + geom_abline(slope = 0.32, intercept = -5.4, color = "orange", size = 4) +
+	geom_point(size = 4, alpha = 0.5, color = "blue") + 
+	geom_smooth(method = "lm", size = 2) +
+	# facet_wrap( ~ flux_type, scales = "free") +
+	theme_bw() +
+	ylab("oxygen flux (mg O2/L*hr*um3)") +
+	xlab("temperature (1/kT)") + theme(text = element_text(size=24)) +
+	scale_x_reverse()
+
+ggsave("figures/photosynthesis-data-plot.pdf")
+
+
+### respiration prediction plot
+all_data_corr %>% 
+	ungroup() %>% 
+	filter(temperature.x != 19) %>%
+	filter(temperature.x != 22) %>%
+	gather(key = flux_type, value = rate_estimate, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected")) %>% 
+	mutate(rate_estimate = rate_estimate * 3600) %>% 
+	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
+	filter(rate_estimate > 0) %>%
+	filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>% 
+	mutate(temperature.x = as.numeric(temperature.x)) %>% 
+	ungroup() %>% 
+	mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
+	mutate(flux_type = str_replace(flux_type, "respiration_corr", "respiration")) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) %>%
+	filter(flux_type == "respiration") %>% 
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate))) + 
+	geom_abline(slope = 0.65, intercept = 7, color = "orange", size = 4) +
+	geom_point(size = 4, alpha = 0.0000000005, color = "blue") + 
+	# geom_smooth(method = "lm") +
+	# facet_wrap( ~ flux_type, scales = "free") +
+	theme_bw() +
+	ylab("oxygen flux (mg O2/L*hr*um3)") +
+	xlab("temperature (1/kT)") + theme(text = element_text(size=24)) +
+	scale_x_reverse()
+
+ggsave("figures/respiration-prediction-plot.pdf")
+
+
+### respiration data plot
+all_data_corr %>% 
+	ungroup() %>% 
+	filter(temperature.x != 19) %>%
+	filter(temperature.x != 22) %>%
+	gather(key = flux_type, value = rate_estimate, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected")) %>% 
+	mutate(rate_estimate = rate_estimate * 3600) %>% 
+	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
+	filter(rate_estimate > 0) %>%
+	filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>% 
+	mutate(temperature.x = as.numeric(temperature.x)) %>% 
+	ungroup() %>% 
+	mutate(flux_type = str_replace(flux_type, "gross_photosynthesis_corr", "gross photosynthesis")) %>% 
+	mutate(flux_type = str_replace(flux_type, "respiration_corr", "respiration")) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) %>%
+	filter(flux_type == "respiration") %>% 
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate))) + 
+	geom_abline(slope = 0.65, intercept = 7, color = "orange", size = 4) +
+	geom_point(size = 4, alpha = 0.5, color = "blue") + 
+	geom_smooth(method = "lm", size =2, color = "blue") +
+	# facet_wrap( ~ flux_type, scales = "free") +
+	theme_bw() +
+	ylab("oxygen flux (mg O2/L*hr*um3)") +
+	xlab("temperature (1/kT)") + theme(text = element_text(size=24)) +
+	scale_x_reverse()
+
+ggsave("figures/respiration-data-plot.pdf")
+
+

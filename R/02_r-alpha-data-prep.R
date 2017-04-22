@@ -111,13 +111,14 @@ all_data_16 <- full_join(photosynthesis, respiration, by = "well_id") %>%
 all_data_16b <- left_join(all_data_16, id_key)
 
 all_data_16c <- left_join(all_data_16b, cell_densities) %>% 
-	mutate(cell_density = as.numeric(cell_density))
+	mutate(cell_density = as.numeric(cell_density)) %>% 
+	mutate(mean_cell_density = as.numeric(mean_cell_density))
 
 
 all_data_16c %>% 
-	group_by(temperature.x, treatment, cell_density) %>% 
+	group_by(temperature.x, treatment, mean_cell_density) %>% 
 	summarise_each(funs(mean, std.error), gross_photosynthesis, corrected_photosynthesis_slope, corrected_respiration_slope) %>% 
-ggplot(aes(x = cell_density, y = corrected_respiration_slope_mean*-1)) + geom_point() +
+ggplot(aes(x = mean_cell_density, y = corrected_respiration_slope_mean*-1)) + geom_point() +
 	# geom_errorbar(aes(ymin = gross_photosynthesis_mean - gross_photosynthesis_std.error, ymax = gross_photosynthesis_mean + gross_photosynthesis_std.error), width = 0.1) +
 	geom_smooth(method = "lm")
 
@@ -137,7 +138,7 @@ percapita_fluxes <- all_data_16c %>%
 	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
 	filter(rate_estimate > 0) %>% 
 	filter(flux_type %in% c("gross_photosynthesis", "corrected_respiration_slope")) %>% 
-	mutate(percapita_metabolic_rate = rate_estimate/cell_density) %>%
+	mutate(percapita_metabolic_rate = rate_estimate/mean_cell_density) %>%
 	mutate(flux_type = str_replace(flux_type, "corrected_respiration_slope", "respiration")) %>% 
 	ggplot(aes(x = cell_density, y = percapita_metabolic_rate)) + geom_point(size = 4, alpha = 0.5, color = "blue") + 
 	# geom_smooth(method = "lm") +
@@ -152,7 +153,7 @@ population_fluxes <- all_data_16c %>%
 	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
 	filter(rate_estimate > 0) %>% 
 	filter(flux_type %in% c("gross_photosynthesis", "corrected_respiration_slope")) %>% 
-	mutate(percapita_metabolic_rate = rate_estimate/cell_density) %>% 
+	mutate(percapita_metabolic_rate = rate_estimate/mean_cell_density) %>% 
 	mutate(flux_type = str_replace(flux_type, "corrected_respiration_slope", "respiration")) %>% 
 	ggplot(aes(x = cell_density, y = rate_estimate)) + geom_point(size = 4, alpha = 0.5, color = "blue") + 
 	# geom_smooth(method = "lm") +
@@ -169,9 +170,9 @@ all_data_16c %>%
 	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
 	filter(rate_estimate > 0) %>% 
 	filter(flux_type %in% c("gross_photosynthesis", "corrected_respiration_slope")) %>% 
-	mutate(percapita_metabolic_rate = rate_estimate/cell_density) %>% 
+	mutate(percapita_metabolic_rate = rate_estimate/mean_cell_density) %>% 
 group_by(flux_type) %>% 
-	do(tidy(lm(log10(percapita_metabolic_rate) ~ log10(cell_density), data = .), conf.int = TRUE)) %>%
+	do(tidy(lm(log(percapita_metabolic_rate) ~ log(mean_cell_density), data = .), conf.int = TRUE)) %>%
 	filter(term != "(Intercept)") %>% 
 	ungroup() %>% 
 	mutate(flux_type = str_replace(flux_type, "corrected_respiration_slope", "respiration")) %>% 
@@ -197,8 +198,8 @@ df <- all_data_16c %>%
 
 df %>% 
 	group_by(flux_type) %>% 
-	ggplot(aes(x = log10(cell_density), y = log10(percapita_metabolic_rate))) + geom_point(size = 3, color = "blue", alpha = 0.5) +
-geom_smooth(method = "lm") + facet_wrap( ~ flux_type) + theme_bw() + xlab("ln cell density") + ylab("ln per capita metabolic rate")
+	ggplot(aes(x = log(cell_density), y = log(percapita_metabolic_rate))) + geom_point(size = 3, color = "blue", alpha = 0.5) +
+	facet_wrap( ~ flux_type) + theme_bw() + xlab("ln cell density") + ylab("ln per capita metabolic rate")
 
 ?abline
 

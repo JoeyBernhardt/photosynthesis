@@ -1,5 +1,5 @@
-treatment,cell_density
-d1,266479
-d2,217327
-d3,127733
-d4,57778
+treatment,cell_density,cell_density_b,mean_cell_density
+d1,266479,410526,338502.5
+d2,217327,264840,241083.5
+d3,127733,101999,114866
+d4,57778,66172,61975
