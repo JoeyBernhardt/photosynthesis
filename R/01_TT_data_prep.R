@@ -983,8 +983,8 @@ all_data_corr %>%
 	# facet_wrap( ~ flux_type, scales = "free") +
 	theme_bw() +
 	ylab("oxygen flux (mg O2/L*hr*um3)") +
-	xlab("temperature (1/kT)") + theme(text = element_text(size=24)) +
-	scale_x_reverse()
+	xlab("temperature (1/kT)") 
+	
 
 ggsave("figures/respiration-data-plot.pdf")
 
