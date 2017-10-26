@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(cowplot)
+library(stringr)
 
 
 flux_rates_raw <- read_csv("data-processed/flux_rates.csv")
@@ -54,7 +55,7 @@ photosynthesis_plot <- flux_rates %>%
 	geom_point(size = 4, shape = 1, color = "black") 
 
 
-figure1 <- plot_grid(respiration_plot, photosynthesis_plot, labels = c("A) Respiration", "B) Photosynthesis"), ncol = 2, nrow = 1, label_x = 0, hjust = 0)
+figure1 <- plot_grid(photosynthesis_plot, respiration_plot, labels = c("A) Photosynthesis", "B) Respiration"), ncol = 2, nrow = 1, label_x = 0, hjust = 0)
 
 
 save_plot("figures/k-temp-figure1.png", figure1, nrow = 1, ncol = 2, base_height = 4.5, base_width = 5)
