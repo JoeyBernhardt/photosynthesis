@@ -33,7 +33,7 @@ respiration_plot <- flux_rates %>%
 	ylab(bquote('ln oyxygen flux ('*mg ~O[2]~ um^-3~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-	theme(text = element_text(size=14, family = "Helvetica")) +
+	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
 	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
 	geom_point(size = 4, shape = 1, color = "black") 
@@ -49,13 +49,13 @@ photosynthesis_plot <- flux_rates %>%
 	ylab(bquote('ln oyxygen flux ('*mg ~O[2]~ um^-3~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-	theme(text = element_text(size=14, family = "Helvetica")) +
+	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
 
-figure1 <- plot_grid(photosynthesis_plot, respiration_plot, labels = c("A) Photosynthesis", "B) Respiration"), ncol = 2, nrow = 1, label_x = 0, hjust = 0)
+figure1 <- plot_grid(photosynthesis_plot, respiration_plot, labels = c("A) Photosynthesis", "B) Respiration"), label_fontface = "plain", ncol = 2, nrow = 1, label_x = 0, hjust = 0)
+?plot_grid
 
-
-save_plot("figures/k-temp-figure1.png", figure1, nrow = 1, ncol = 2, base_height = 4.5, base_width = 5)
+save_plot("figures/k-temp-figure1.png", figure1, nrow = 1, ncol = 2, base_height = 4, base_width = 4.4)
