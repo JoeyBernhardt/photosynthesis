@@ -142,4 +142,34 @@ flux2 %>%
 	filter(rate_estimate > 0) %>% 
 	group_by(flux_type) %>% 
 	do(tidy(lm(log(rate_biomassM) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+
+# CUE ---------------------------------------------------------------------
+
+CUE <- flux2 %>% 
+	select(id, well_id, temperature.y, rate_biomassM, flux_type, inverse_temp) %>% 
+	spread(key = flux_type, value = rate_biomassM) %>% 
+	mutate(CUE = 1- (respiration/`gross photosynthesis`)) 
+
+
+CUE %>% 
+	ggplot(aes(x = inverse_temp, y = CUE)) +
+	geom_point(size = 4, alpha = 0.5) + 
+	geom_smooth(method = "lm", size =2, color = "black") +
+	ylab("Carbon use efficiency (1-R/P)") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=15, family = "Helvetica")) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	geom_point(size = 4, shape = 1, color = "black") 
+ggsave("figures/CUE.pdf", width = 5, height = 4)
 	
+	CUE %>% 
+do(tidy(lm(log(CUE) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+CUE %>% 
+	do(tidy(lm(CUE ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+CUE %>% 
+	do(tidy(lm(CUE ~ temperature.y, data = .), conf.int = TRUE)) %>% View
