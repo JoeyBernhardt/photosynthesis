@@ -41,61 +41,61 @@ flux2 %>%
 respiration_plot_menden <- flux2 %>% 
 	filter(flux_type == "respiration") %>% 
 	ggplot(aes(x = inverse_temp, y = log(rate_biomassMD))) + 
-	geom_point(size = 4, alpha = 0.5) + 
+	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
 	theme_bw() +
-	ylab("Ln oxygen flux (mg O2 / ug C / hr) ") +
+	ylab(bquote('ln oyxygen flux ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
 photosynthesis_plot_menden <- flux2 %>% 
 	filter(flux_type == "gross photosynthesis") %>% 
 	ggplot(aes(x = inverse_temp, y = log(rate_biomassMD))) + 
-	geom_point(size = 4, alpha = 0.5) + 
+	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
 	theme_bw() +
-	ylab("Ln oxygen flux (mg O2 / ug C / hr) ") +
+	ylab(bquote('ln oyxygen flux ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
 respiration_plot_reynolds <- flux2 %>% 
 	filter(flux_type == "respiration") %>% 
 	ggplot(aes(x = inverse_temp, y = log(rate_biomassR))) + 
-	geom_point(size = 4, alpha = 0.5) + 
+	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
 	theme_bw() +
-	ylab("Ln oxygen flux (mg O2 / ug C / hr) ") +
+	ylab(bquote('ln oyxygen flux ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
 photosynthesis_plot_reynolds <- flux2 %>% 
 	filter(flux_type == "gross photosynthesis") %>% 
 	ggplot(aes(x = inverse_temp, y = log(rate_biomassR))) + 
-	geom_point(size = 4, alpha = 0.5) + 
+	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
 	theme_bw() +
-	ylab("Ln oxygen flux (mg O2 / ug C / hr) ") +
+	ylab(bquote('ln oyxygen flux ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
 respiration_plot_montagnes <- flux2 %>% 
@@ -111,7 +111,7 @@ respiration_plot_montagnes <- flux2 %>%
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
 photosynthesis_plot_montagnes <- flux2 %>% 
@@ -127,7 +127,7 @@ photosynthesis_plot_montagnes <- flux2 %>%
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
 	theme(text = element_text(size=15, family = "Helvetica")) +
 	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
-	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
 fig1_montagnes <- plot_grid(photosynthesis_plot_montagnes, respiration_plot_montagnes, labels = c("A) Photosynthesis", "B) Respiration"), label_fontface = "plain", ncol = 2, nrow = 1, label_x = 0, hjust = 0)
