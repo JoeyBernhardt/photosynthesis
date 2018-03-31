@@ -828,6 +828,23 @@ write_csv(all_data_corr, "data-processed/flux_rates.csv")
 
 all_data_corr <- read_csv("data-processed/flux_rates.csv")
 
+### convert biovolume to biomass
+
+all_corr2 <- all_data_corr %>% 
+	mutate(biomassM = 0.109*(biovolume)^0.991) %>% 
+	mutate(biomassMD = 0.3584378*(biovolume)^1.088) %>% 
+	mutate(biomassR = 0.47*(biovolume)^0.99)
+
+
+
+all_corr3 <- all_corr2 %>% 
+	mutate(GP_corr_M = corrected_photosynthesis_slope/biomassM + (-1*corrected_respiration_slope/biomassM)) %>% 
+	mutate(R_corr_M = corrected_respiration_slope/biomassM) %>% 
+	mutate(NP_corrM = corrected_photosynthesis_slope/biomassM) 
+
+write_csv(all_corr3, "data-processed/flux_rates_biomass.csv")
+
+
 all_data_corr %>% 
 	ungroup() %>% 
 	filter(temperature.x != 19) %>%

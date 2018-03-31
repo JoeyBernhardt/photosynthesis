@@ -33,7 +33,10 @@ flux_rates <- flux_rates_raw %>%
 flux2 <- flux_rates %>% 
 	mutate(rate_biomassMD = 0.3584378*(rate_estimate)^1.088)%>% 
 	mutate(rate_biomassR = 0.47*(rate_estimate)^0.99) %>% 
-	mutate(rate_biomassM = 0.109*(rate_estimate)^0.991)
+	mutate(rate_biomassM = 0.109*(rate_estimate)^0.991) %>% 
+	mutate(rate_biomassMq = 0.109*(rate_estimate^(3/4))^0.991) %>% 
+	mutate(population_biomass = 0.109*(biovolume)^0.991) %>% 
+	mutate(mass_quarter = population_biomass^(1/4))
 
 
 flux2 %>% 
@@ -155,7 +158,7 @@ lm(log(rate_biomassR) ~ inverse_temp, data = .) %>% summary()
 flux2 %>% 
 	filter(rate_estimate > 0) %>% 
 	group_by(flux_type) %>% 
-	do(tidy(lm(log(rate_biomassR) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	do(tidy(lm(log(rate_biomassM*((population_biomass)^(1/4))) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 flux2 %>% 
 	filter(rate_estimate > 0) %>% 
@@ -163,6 +166,11 @@ flux2 %>%
 	do(tidy(lm(log(rate_biomassM) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 flux2 %>% 
+	filter(rate_estimate > 0) %>% 
+	group_by(flux_type) %>% 
+	do(tidy(lm(log(rate_biomassM) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+	flux2 %>% 
 	filter(rate_estimate > 0) %>% 
 	filter(flux_type == "gross photosynthesis") %>% 
 	lm(log(rate_biomassM) ~ inverse_temp, data = .) %>% summary()
@@ -248,7 +256,7 @@ ggsave("figures/GP_to_R.pdf", width = 5, height = 4)
 
 	CUE %>% 
 do(tidy(lm(log(ratio) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
-	CUE %>% 
+		CUE %>% 
 		lm(log(ratio) ~ inverse_temp, data = .) %>% summary()
 
 	CUE %>% 
