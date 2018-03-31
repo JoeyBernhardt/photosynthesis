@@ -5,14 +5,15 @@ library(broom)
 library(extrafont)
 loadfonts()
 
-flux_rates_raw <- read_csv("data-processed/flux_rates.csv")
+flux_rates_raw <- read_csv("data-processed/flux_rates_biomass.csv")
 flux_rates <- flux_rates_raw %>% 
 	filter(temperature.x != 19) %>%
 	filter(temperature.x != 22) %>% 
 	mutate(net_photosynthesis = corrected_photosynthesis_slope/biovolume) %>% 
-	gather(key = flux_type, value = rate_estimate, net_photosynthesis, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected")) %>% 
+	gather(key = flux_type, value = rate_estimate, net_photosynthesis, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected"), contains("_M")) %>% 
 	mutate(rate_estimate = rate_estimate * 3600) %>% 
 	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
+	mutate(rate_estimate = ifelse(grepl("R", flux_type), rate_estimate*-1, rate_estimate)) %>% 
 	filter(rate_estimate > 0) %>%
 	# filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>% 
 	mutate(temperature.x = as.numeric(temperature.x)) %>% 
@@ -22,21 +23,35 @@ flux_rates <- flux_rates_raw %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature.x+273.15)))) 
 
 
-# tt_mass <- tt %>% 
-# 	mutate(cell_biomass_MD = 0.3584378*(cell_volume)^1.088) %>% 
-# 	mutate(cell_biomass_R = 0.47*(cell_volume)^0.99) %>% 
-# 	mutate(cell_biomass_M = 0.109 *(cell_volume)^0.991) %>% 
-# 	mutate(population_biomass_M = cell_biomass_M * cell_density) %>% 
-# 	mutate(population_biomass_MD = cell_biomass_MD * cell_density) %>% 
-# 	mutate(population_biomass_R = cell_biomass_R * cell_density)
-
 flux2 <- flux_rates %>% 
 	mutate(rate_biomassMD = 0.3584378*(rate_estimate)^1.088)%>% 
 	mutate(rate_biomassR = 0.47*(rate_estimate)^0.99) %>% 
 	mutate(rate_biomassM = 0.109*(rate_estimate)^0.991) %>% 
-	mutate(rate_biomassMq = 0.109*(rate_estimate^(3/4))^0.991) %>% 
-	mutate(population_biomass = 0.109*(biovolume)^0.991) %>% 
-	mutate(mass_quarter = population_biomass^(1/4))
+	mutate(rate_biomassMq = 0.109*(rate_estimate^(3/4))^0.991)
+
+
+unique(flux2$flux_type)
+
+flux2 %>% 
+	filter(rate_estimate > 0) %>% 
+	group_by(flux_type) %>% 
+	do(tidy(lm(log(rate_biomassM) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+flux2 %>% 
+	filter(rate_estimate > 0) %>% 
+	group_by(flux_type) %>% 
+	do(tidy(lm(log(rate_estimate*(biomassM^(1/4))) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+flux2 %>% 
+	filter(rate_estimate > 0, flux_type == "GP_corr_M") %>% 
+	group_by(flux_type) %>% 
+	do(tidy(lm(log(rate_estimate*(biomassM^(1/4))) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+flux2 %>% 
+	filter(rate_estimate > 0, flux_type == "GP_corr_M") %>% 
+	group_by(flux_type) %>% 
+lm(log(rate_estimate*(biomassM^(1/4))) ~ inverse_temp, data = .) %>% summary()
+
 
 
 flux2 %>% 
