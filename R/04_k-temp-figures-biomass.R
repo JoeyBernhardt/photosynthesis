@@ -30,6 +30,32 @@ flux2 <- flux_rates %>%
 	mutate(rate_biomassMq = 0.109*(rate_estimate^(3/4))^0.991)
 
 
+flux3 <- flux_rates %>% 
+	filter(flux_type %in% c("GP_corr_M", "R_corr_M", "NP_corr_M", "GP_corr_M3q", "R_corr_M3q", "NP_corr_M3q"))
+
+
+
+#### I think this is correct!!
+flux3 %>% 
+	filter(flux_type %in% c("GP_corr_M", "R_corr_M", "NP_corr_M")) %>% 
+	group_by(flux_type) %>% 
+	do(tidy(lm(log(rate_estimate*(biomassM^0.25)) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+flux3 %>% 
+	filter(flux_type %in% c("GP_corr_M3q", "R_corr_M3q", "NP_corr_M3q")) %>% 
+	group_by(flux_type) %>% 
+	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+flux3 %>% 
+	filter(flux_type == "R_corr_M") %>% 
+lm(log(rate_estimate*(biomassM^0.25)) ~ inverse_temp, data = .) %>% summary
+
+
+flux3 %>% 
+	group_by(flux_type) %>%
+	filter(flux_type %in% c("GP_corr_M25", "R_corr_M25", "NP_corr_M25")) %>% 
+	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
 unique(flux2$flux_type)
 
 flux2 %>% 
@@ -119,8 +145,8 @@ photosynthesis_plot_reynolds <- flux2 %>%
 	geom_point(size = 4, shape = 1, color = "black") 
 
 respiration_plot_montagnes <- flux2 %>% 
-	filter(flux_type == "respiration") %>% 
-	ggplot(aes(x = inverse_temp, y = log(rate_biomassM))) +
+	filter(rate_estimate > 0, flux_type == "R_corr_M") %>%  
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassM^0.25)))) +
 	geom_smooth(method = "lm", size =2, color = "black") +
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_point(size = 4, shape = 1) + 
@@ -134,9 +160,9 @@ respiration_plot_montagnes <- flux2 %>%
 	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
-photosynthesis_plot_montagnes <- flux2 %>% 
-	filter(flux_type == "gross photosynthesis") %>% 
-	ggplot(aes(x = inverse_temp, y = log(rate_biomassM))) + 
+photosynthesis_plot_montagnes <- flux3 %>% 
+	filter(rate_estimate > 0, flux_type == "GP_corr_M") %>%  
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassM^0.25)))) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_point(size = 4, shape = 1) + 
@@ -151,7 +177,7 @@ photosynthesis_plot_montagnes <- flux2 %>%
 	geom_point(size = 4, shape = 1, color = "black") 
 
 fig1_montagnes <- plot_grid(photosynthesis_plot_montagnes, respiration_plot_montagnes, labels = c("A) Photosynthesis", "B) Respiration"), label_fontface = "plain", ncol = 2, nrow = 1, label_x = 0, hjust = 0)
-save_plot("figures/k-temp-figure1-montagnes.pdf", fig1_montagnes, nrow = 1, ncol = 2, base_height = 4, base_width = 4.4)
+save_plot("figures/k-temp-figure1-montagnes-mass_exp.pdf", fig1_montagnes, nrow = 1, ncol = 2, base_height = 4, base_width = 4.4)
 
 
 
@@ -206,6 +232,14 @@ CUE <- flux2 %>%
 	mutate(log_ratio = log(`gross photosynthesis`)/log(respiration))
 
 
+flux4 <- flux3 %>% 
+	filter(flux_type %in% c("GP_corr_M", "R_corr_M", "NP_corr_M")) %>%
+	select(id, well_id, temperature.y, rate_estimate, flux_type, inverse_temp) %>% 
+	spread(key = flux_type, value = rate_estimate) %>% 
+	mutate(ratio = `GP_corr_M`/R_corr_M)
+
+
+
 CUE %>% 
 	ggplot(aes(x = inverse_temp, y = CUE)) +
 	geom_point(size = 4, alpha = 0.5) + 
@@ -248,6 +282,29 @@ ggsave("figures/GP_to_R.pdf", width = 5, height = 4)
 
 
 
+
+flux4 %>%
+	filter(ratio < 3) %>% 
+	ggplot(aes(x = inverse_temp, y = log(ratio))) +
+	geom_point(size = 4, alpha = 0.5) + 
+	geom_smooth(method = "lm", size =2, color = "black") +
+	ylab(bquote('Ln GP/R ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") +
+	theme(text = element_text(size=12, family = "Arial")) +
+	theme(panel.border = element_rect(colour = "black", fill=NA, size=0.5)) +
+	theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+	theme_bw() +
+	theme(text = element_text(size=12, family = "Arial"),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				panel.background = element_rect(colour = "black", size=0.5),
+				plot.title = element_text(hjust = 0.5, size = 12)) +
+	ggtitle("Temperature (°C)") +
+	geom_point(size = 4, shape = 1, color = "black") 
+ggsave("figures/GP_to_R_mass.pdf", width = 5, height = 4)
+
+
+
 CUE %>% 
 	filter(ratio < 40) %>% 
 	ggplot(aes(x = inverse_temp, y = ratio)) +
@@ -267,6 +324,14 @@ CUE %>%
 	ggtitle("Temperature (°C)") +
 	geom_point(size = 4, shape = 1, color = "black") 
 ggsave("figures/GP_to_R.pdf", width = 5, height = 4)
+
+
+
+flux4 %>% 
+	do(tidy(lm(log(ratio) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+flux4 %>% 
+	lm(log(ratio) ~ inverse_temp, data = .) %>% summary()
 
 
 	CUE %>% 

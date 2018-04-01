@@ -840,7 +840,10 @@ all_corr2 <- all_data_corr %>%
 all_corr3 <- all_corr2 %>% 
 	mutate(GP_corr_M = corrected_photosynthesis_slope/biomassM + (-1*corrected_respiration_slope/biomassM)) %>% 
 	mutate(R_corr_M = corrected_respiration_slope/biomassM) %>% 
-	mutate(NP_corr_M = corrected_photosynthesis_slope/biomassM) 
+	mutate(NP_corr_M = corrected_photosynthesis_slope/biomassM) %>% 
+	mutate(GP_corr_M3q = corrected_photosynthesis_slope/(biomassM^0.75) + (-1*corrected_respiration_slope/(biomassM^0.75))) %>% 
+	mutate(R_corr_M3q = corrected_respiration_slope/(biomassM^0.75)) %>% 
+	mutate(NP_corr_M3q = corrected_photosynthesis_slope/(biomassM^0.75))
 
 write_csv(all_corr3, "data-processed/flux_rates_biomass.csv")
 
