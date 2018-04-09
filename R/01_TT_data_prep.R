@@ -841,6 +841,12 @@ all_corr3 <- all_corr2 %>%
 	mutate(GP_corr_M = corrected_photosynthesis_slope/biomassM + (-1*corrected_respiration_slope/biomassM)) %>% 
 	mutate(R_corr_M = corrected_respiration_slope/biomassM) %>% 
 	mutate(NP_corr_M = corrected_photosynthesis_slope/biomassM) %>% 
+	mutate(GP_corr_MD = corrected_photosynthesis_slope/biomassMD + (-1*corrected_respiration_slope/biomassMD)) %>% 
+	mutate(R_corr_MD = corrected_respiration_slope/biomassMD) %>% 
+	mutate(NP_corr_MD = corrected_photosynthesis_slope/biomassMD) %>% 
+	mutate(GP_corr_R = corrected_photosynthesis_slope/biomassR + (-1*corrected_respiration_slope/biomassR)) %>% 
+	mutate(R_corr_R = corrected_respiration_slope/biomassR) %>% 
+	mutate(NP_corr_R = corrected_photosynthesis_slope/biomassR) %>% 
 	mutate(GP_corr_M3q = corrected_photosynthesis_slope/(biomassM^0.75) + (-1*corrected_respiration_slope/(biomassM^0.75))) %>% 
 	mutate(R_corr_M3q = corrected_respiration_slope/(biomassM^0.75)) %>% 
 	mutate(NP_corr_M3q = corrected_photosynthesis_slope/(biomassM^0.75))

@@ -10,10 +10,10 @@ flux_rates <- flux_rates_raw %>%
 	filter(temperature.x != 19) %>%
 	filter(temperature.x != 22) %>% 
 	mutate(net_photosynthesis = corrected_photosynthesis_slope/biovolume) %>% 
-	gather(key = flux_type, value = rate_estimate, net_photosynthesis, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected"), contains("_M")) %>% 
+	gather(key = flux_type, value = rate_estimate, net_photosynthesis, gross_photosynthesis, gross_photosynthesis_corr, respiration_corr, contains("corrected"), contains("corr")) %>% 
 	mutate(rate_estimate = rate_estimate * 3600) %>% 
 	mutate(rate_estimate = ifelse(grepl("respiration", flux_type), rate_estimate*-1, rate_estimate)) %>% 
-	mutate(rate_estimate = ifelse(grepl("R", flux_type), rate_estimate*-1, rate_estimate)) %>% 
+	mutate(rate_estimate = ifelse(grepl("R_", flux_type), rate_estimate*-1, rate_estimate)) %>% 
 	filter(rate_estimate > 0) %>%
 	# filter(flux_type %in% c("gross_photosynthesis_corr", "respiration_corr")) %>% 
 	mutate(temperature.x = as.numeric(temperature.x)) %>% 
@@ -31,24 +31,20 @@ flux2 <- flux_rates %>%
 
 
 flux3 <- flux_rates %>% 
-	filter(flux_type %in% c("GP_corr_M", "R_corr_M", "NP_corr_M", "GP_corr_M3q", "R_corr_M3q", "NP_corr_M3q"))
+	# filter(flux_type %in% c("GP_corr_M", "R_corr_M", "NP_corr_M", "GP_corr_M3q", "R_corr_M3q", "NP_corr_M3q"))
 
 
 
 #### I think this is correct!!
-flux3 %>% 
-	filter(flux_type %in% c("GP_corr_M", "R_corr_M", "NP_corr_M")) %>% 
+flux2 %>% 
+	filter(flux_type %in% c("GP_corr_R", "R_corr_R")) %>% 
 	group_by(flux_type) %>% 
-	do(tidy(lm(log(rate_estimate*(biomassM^0.25)) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	do(tidy(lm(log(rate_estimate*(biomassR^0.25)) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
-flux3 %>% 
-	filter(flux_type %in% c("GP_corr_M3q", "R_corr_M3q", "NP_corr_M3q")) %>% 
-	group_by(flux_type) %>% 
-	do(tidy(lm(log(rate_estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
-flux3 %>% 
-	filter(flux_type == "R_corr_M") %>% 
-lm(log(rate_estimate*(biomassM^0.25)) ~ inverse_temp, data = .) %>% summary
+flux2 %>% 
+	filter(flux_type == "R_corr_R") %>% 
+lm(log(rate_estimate*(biomassMD^0.25)) ~ inverse_temp, data = .) %>% summary
 
 
 flux3 %>% 
@@ -85,8 +81,8 @@ flux2 %>%
 	distinct(well_id) %>% tally() %>% View
 
 respiration_plot_menden <- flux2 %>% 
-	filter(flux_type == "respiration") %>% 
-	ggplot(aes(x = inverse_temp, y = log(rate_biomassMD))) + 
+	filter(rate_estimate > 0, flux_type == "R_corr_MD") %>%  
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassMD^0.25)))) +
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
@@ -100,8 +96,8 @@ respiration_plot_menden <- flux2 %>%
 	geom_point(size = 4, shape = 1, color = "black") 
 
 photosynthesis_plot_menden <- flux2 %>% 
-	filter(flux_type == "gross photosynthesis") %>% 
-	ggplot(aes(x = inverse_temp, y = log(rate_biomassMD))) + 
+	filter(rate_estimate > 0, flux_type == "GP_corr_MD") %>%  
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassMD^0.25)))) +
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
@@ -115,8 +111,8 @@ photosynthesis_plot_menden <- flux2 %>%
 	geom_point(size = 4, shape = 1, color = "black") 
 
 respiration_plot_reynolds <- flux2 %>% 
-	filter(flux_type == "respiration") %>% 
-	ggplot(aes(x = inverse_temp, y = log(rate_biomassR))) + 
+	filter(rate_estimate > 0, flux_type == "R_corr_R") %>%  
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassR^0.25)))) +
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
@@ -130,8 +126,8 @@ respiration_plot_reynolds <- flux2 %>%
 	geom_point(size = 4, shape = 1, color = "black") 
 
 photosynthesis_plot_reynolds <- flux2 %>% 
-	filter(flux_type == "gross photosynthesis") %>% 
-	ggplot(aes(x = inverse_temp, y = log(rate_biomassR))) + 
+	filter(rate_estimate > 0, flux_type == "GP_corr_R") %>%  
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassR^0.25)))) +
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
 	# facet_wrap( ~ flux_type, scales = "free") +
@@ -160,7 +156,7 @@ respiration_plot_montagnes <- flux2 %>%
 	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
 	geom_point(size = 4, shape = 1, color = "black") 
 
-photosynthesis_plot_montagnes <- flux3 %>% 
+photosynthesis_plot_montagnes <- flux2 %>% 
 	filter(rate_estimate > 0, flux_type == "GP_corr_M") %>%  
 	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassM^0.25)))) + 
 	geom_smooth(method = "lm", size =2, color = "black") +
