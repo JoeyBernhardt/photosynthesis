@@ -147,7 +147,7 @@ respiration_plot_montagnes <- flux2 %>%
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_point(size = 4, shape = 1) + 
 	# facet_wrap( ~ flux_type, scales = "free") +
-	theme_bw() +
+	# theme_bw() +
 	ylab(bquote('ln oyxygen flux ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
@@ -163,7 +163,7 @@ photosynthesis_plot_montagnes <- flux2 %>%
 	geom_point(size = 4, alpha = 0.2) + 
 	geom_point(size = 4, shape = 1) + 
 	# facet_wrap( ~ flux_type, scales = "free") +
-	theme_bw() +
+	# theme_bw() +
 	ylab(bquote('ln oyxygen flux ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(), axis.line = element_line(colour = "black")) +
@@ -175,6 +175,24 @@ photosynthesis_plot_montagnes <- flux2 %>%
 fig1_montagnes <- plot_grid(photosynthesis_plot_montagnes, respiration_plot_montagnes, labels = c("A) Photosynthesis", "B) Respiration"), label_fontface = "plain", ncol = 2, nrow = 1, label_x = 0, hjust = 0)
 save_plot("figures/k-temp-figure1-montagnes-mass_exp.pdf", fig1_montagnes, nrow = 1, ncol = 2, base_height = 4, base_width = 4.4)
 
+
+
+flux2 %>% 
+	filter(rate_estimate > 0, flux_type == "GP_corr_M") %>%  
+	ggplot(aes(x = inverse_temp, y = log(rate_estimate*(biomassM^0.25)))) + 
+	geom_smooth(method = "lm", size =2, color = "black") +
+	geom_point(size = 4, alpha = 0.2) + 
+	geom_point(size = 4, shape = 1) + 
+	# facet_wrap( ~ flux_type, scales = "free") +
+	# theme_bw() +
+	ylab(bquote('ln oyxygen flux ('*mg ~O[2]*' ug '*C^-1~hr^-1*')')) +
+	# theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+	# 			panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+	theme(text = element_text(size=18, family = "Arial")) +
+	scale_x_reverse(sec.axis = sec_axis(~((1/(.*8.62 * 10^(-5)))-273.15))) + xlab("Temperature (1/kT)") + ggtitle("Temperature (°C)") +
+	theme(plot.title = element_text(hjust = 0.5, size = 15)) +
+	geom_point(size = 4, shape = 1, color = "black")
+ggsave("figures/k-temp-photosynthesis_poster.pdf", width = 4.5, height = 4)	
 
 
 fig1_biomass <- plot_grid(photosynthesis_plot_reynolds, respiration_plot_reynolds,photosynthesis_plot_menden, respiration_plot_menden,photosynthesis_plot_montagnes, respiration_plot_montagnes, labels = c("A) Photosynthesis", "B) Respiration"), label_fontface = "plain", ncol = 2, nrow = 3, label_x = 0, hjust = 0)
